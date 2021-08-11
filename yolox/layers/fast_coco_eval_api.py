@@ -96,6 +96,11 @@ class COCOeval_opt(COCOeval):
         ]
         ious = [[self.ious[imgId, catId] for catId in catIds] for imgId in p.imgIds]
 
+        # <<<<<< calculate avg iou
+        avg_iou = sum([iou[0][:, 0].max() for iou in ious]) / len(ious)
+        print("avg iou: {}".format(avg_iou))
+        # >>>>>>
+
         if not p.useCats:
             # For each image, flatten per-category lists into a single list
             ground_truth_instances = [

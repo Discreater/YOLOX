@@ -153,13 +153,13 @@ class YOLOXHead(nn.Module):
             x = self.stems[k](x)
             cls_x = x
             reg_x = x
-
+            # m = 2^k
             cls_feat = cls_conv(cls_x)
-            cls_output = self.cls_preds[k](cls_feat)
+            cls_output = self.cls_preds[k](cls_feat)  # (b, na * nc, m*n, m*n)
 
             reg_feat = reg_conv(reg_x)
-            reg_output = self.reg_preds[k](reg_feat)
-            obj_output = self.obj_preds[k](reg_feat)
+            reg_output = self.reg_preds[k](reg_feat)  # (b, 4, m*n, m*n)
+            obj_output = self.obj_preds[k](reg_feat)  # (b, na, m*n, m*n)
 
             if self.training:
                 output = torch.cat([reg_output, obj_output, cls_output], 1)
@@ -185,6 +185,7 @@ class YOLOXHead(nn.Module):
                     origin_preds.append(reg_output.clone())
 
             else:
+                # (b, 4 + na + na * nc, m*n, m*n) -> (b, 6, m*n, m*n)
                 output = torch.cat(
                     [reg_output, obj_output.sigmoid(), cls_output.sigmoid()], 1
                 )
@@ -203,9 +204,11 @@ class YOLOXHead(nn.Module):
                 dtype=xin[0].dtype,
             )
         else:
+            # height and width
             self.hw = [x.shape[-2:] for x in outputs]
-            # [batch, n_anchors_all, 85]
+            # [b, (1+4+16)*n*n, 6] -> [b, 21*n*n, 6]
             outputs = torch.cat(
+                # x: (b, 6, m*n * m*n)
                 [x.flatten(start_dim=2) for x in outputs], dim=2
             ).permute(0, 2, 1)
             if self.decode_in_inference:
