@@ -17,6 +17,7 @@ class Exp(MyExp):
         self.test_size = (416, 416)
         self.exp_name = "dac_nano"
         self.enable_mixup = False
+        self.eval_interval = 1
 
         # Define yourself dataset path
         self.data_dir = "datasets/dac"
