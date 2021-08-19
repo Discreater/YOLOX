@@ -41,9 +41,10 @@ class Trainer:
         # training related attr
         self.max_epoch = exp.max_epoch
         self.amp_training = args.fp16
-        self.is_distributed = get_world_size() > 1
+        self.is_distributed = False
         self.rank = get_rank()
-        self.local_rank = get_local_rank()
+        # self.local_rank = get_local_rank()
+        self.local_rank = 1
         self.device = "cuda:{}".format(self.local_rank)
         self.use_model_ema = exp.ema
 
@@ -125,6 +126,7 @@ class Trainer:
     def before_train(self):
         logger.info("args: {}".format(self.args))
         logger.info("exp value:\n{}".format(self.exp))
+        logger.info("device: {}".format(self.device))
 
         # model related init
         torch.cuda.set_device(self.local_rank)
