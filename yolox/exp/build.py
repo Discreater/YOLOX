@@ -5,9 +5,9 @@
 import importlib
 import os
 import sys
+from .yolox_base import Exp
 
-
-def get_exp_by_file(exp_file):
+def get_exp_by_file(exp_file) -> Exp:
     try:
         sys.path.append(os.path.dirname(exp_file))
         current_exp = importlib.import_module(os.path.basename(exp_file).split(".")[0])
@@ -34,8 +34,7 @@ def get_exp_by_name(exp_name):
     exp_path = os.path.join(yolox_path, "exps", "default", filename)
     return get_exp_by_file(exp_path)
 
-
-def get_exp(exp_file, exp_name):
+def get_exp(exp_file, exp_name) -> Exp:
     """
     get Exp object by file or name. If exp_file and exp_name
     are both provided, get Exp by exp_file.

@@ -3,6 +3,7 @@
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
 from copy import deepcopy
+from typing import TypeVar
 
 import torch
 import torch.nn as nn
@@ -17,7 +18,6 @@ __all__ = [
 
 
 def get_model_info(model, tsize):
-
     stride = 64
     img = torch.zeros((1, 3, stride, stride), device=next(model.parameters()).device)
     flops, params = profile(deepcopy(model), inputs=(img,), verbose=False)
@@ -40,8 +40,8 @@ def fuse_conv_and_bn(conv, bn):
             groups=conv.groups,
             bias=True,
         )
-        .requires_grad_(False)
-        .to(conv.weight.device)
+            .requires_grad_(False)
+            .to(conv.weight.device)
     )
 
     # prepare filters
@@ -63,7 +63,10 @@ def fuse_conv_and_bn(conv, bn):
     return fusedconv
 
 
-def fuse_model(model):
+T = TypeVar('T')
+
+
+def fuse_model(model: T) -> T:
     from yolox.models.network_blocks import BaseConv
 
     for m in model.modules():

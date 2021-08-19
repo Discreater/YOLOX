@@ -7,6 +7,7 @@ import os
 import torch.nn as nn
 
 from yolox.exp import Exp as MyExp
+from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
 class Exp(MyExp):
@@ -20,7 +21,7 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
         self.enable_mixup = False
 
-    def get_model(self, sublinear=False):
+    def get_model(self, sublinear=False) -> YOLOX:
 
         def init_yolo(M):
             for m in M.modules():
@@ -28,7 +29,6 @@ class Exp(MyExp):
                     m.eps = 1e-3
                     m.momentum = 0.03
         if "model" not in self.__dict__:
-            from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
             in_channels = [256, 512, 1024]
             # NANO model use depthwise = True, which is main difference.
             backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, depthwise=True)

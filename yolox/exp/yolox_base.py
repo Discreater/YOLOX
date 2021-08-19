@@ -10,6 +10,7 @@ import torch.distributed as dist
 import torch.nn as nn
 
 from .base_exp import BaseExp
+from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
 class Exp(BaseExp):
@@ -61,9 +62,7 @@ class Exp(BaseExp):
         self.test_conf = 0.01
         self.nmsthre = 0.65
 
-    def get_model(self):
-        from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
-
+    def get_model(self) -> YOLOX:
         def init_yolo(M):
             for m in M.modules():
                 if isinstance(m, nn.BatchNorm2d):

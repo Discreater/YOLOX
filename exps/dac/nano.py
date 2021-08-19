@@ -2,8 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import os
-
 import torch.nn as nn
 
 from yolox.exp import Exp as MyExp
@@ -17,7 +15,7 @@ class Exp(MyExp):
         self.scale = (0.5, 1.5)
         self.random_size = (10, 20)
         self.test_size = (416, 416)
-        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.exp_name = "dac_nano"
         self.enable_mixup = False
 
         # Define yourself dataset path
@@ -26,6 +24,8 @@ class Exp(MyExp):
         self.val_ann = "instances_val2017.json"
 
         self.num_classes = 1
+
+        self.in_channels = [256, 512, 1024]
 
     def get_model(self, sublinear=False):
 
@@ -37,12 +37,31 @@ class Exp(MyExp):
 
         if "model" not in self.__dict__:
             from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
-            in_channels = [256, 512, 1024]
             # NANO model use depthwise = True, which is main difference.
-            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, depthwise=True)
-            head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, depthwise=True)
+            backbone = YOLOPAFPN(self.depth, self.width, in_channels=self.in_channels, depthwise=True, act="relu")
+            head = YOLOXHead(self.num_classes, self.width, in_channels=self.in_channels, depthwise=True, act="relu")
             self.model = YOLOX(backbone, head)
 
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)
         return self.model
+
+    def to_forch(self, m: nn.Module):
+        import deploy.models.blocks
+        import deploy.models.yolox
+        import numpy as np
+
+        backbone = deploy.models.yolox.YOLOPAFPN(self.depth, self.width, in_channels=self.in_channels, depthwise=True)
+        head = deploy.models.yolox.YOLOXHead(self.num_classes, self.width, in_channels=self.in_channels, depthwise=True)
+        model = deploy.models.yolox.YOLOX(backbone, head)
+        model.load_state_dict(m.state_dict())
+        model.to_type(np.float32)
+        state_dict = {
+            "state": model.state_dict(),
+            "depth": self.depth,
+            "width": self.width,
+            "in_channels": self.in_channels,
+            "depthwise": True,
+            "num_classes": self.num_classes
+        }
+        return model, state_dict
