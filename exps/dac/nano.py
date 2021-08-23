@@ -11,10 +11,10 @@ class Exp(MyExp):
     def __init__(self):
         super(Exp, self).__init__()
         self.depth = 0.33
-        self.width = 0.25
+        self.width = 0.125
         self.scale = (0.5, 1.5)
         self.random_size = (10, 20)
-        self.test_size = (416, 416)
+        self.test_size = (320, 320)
         self.exp_name = "dac_nano"
         self.enable_mixup = False
         self.eval_interval = 1
@@ -52,13 +52,16 @@ class Exp(MyExp):
         import deploy.models.yolox
         import numpy as np
 
-        backbone = deploy.models.yolox.YOLOPAFPN(self.depth, self.width, in_channels=self.in_channels, depthwise=True)
-        head = deploy.models.yolox.YOLOXHead(self.num_classes, self.width, in_channels=self.in_channels, depthwise=True)
+        act = "relu"
+
+        backbone = deploy.models.yolox.YOLOPAFPN(self.depth, self.width, in_channels=self.in_channels, depthwise=True, act=act)
+        head = deploy.models.yolox.YOLOXHead(self.num_classes, self.width, in_channels=self.in_channels, depthwise=True, act=act)
         model = deploy.models.yolox.YOLOX(backbone, head)
         model.load_state_dict(m.state_dict())
         model.to_type(np.float32)
         state_dict = {
             "state": model.state_dict(),
+            "act": act,
             "depth": self.depth,
             "width": self.width,
             "in_channels": self.in_channels,

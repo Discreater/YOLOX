@@ -14,6 +14,7 @@ from yolox import models
 from yolox import utils
 from yolox.models import network_blocks as blocks
 
+
 @logger.catch
 def main():
     args = parse_args()
@@ -34,7 +35,7 @@ def main():
     model = utils.fuse_model(model)
     serialized_model = serialize_model(model)
     forch_model, state = exp.to_forch(model)
-    compare(forch_model, model)
+    # compare(forch_model, model)
     with open("yolox.forch.state.pkl", "wb") as f:
         pickle.dump(state, f)
     with open(args.output_name, "wb") as f:
@@ -46,16 +47,16 @@ def main():
         with open(args.json_dst, "w") as f:
             json.dump(serialized_model, f, indent=2)
 
-def compare(fmodel: deploy.models.yolox.YOLOX , tmodel: yolox.models.YOLOX):
+
+def compare(fmodel: deploy.models.yolox.YOLOX, tmodel: yolox.models.YOLOX):
     image = torch.randn(1, 3, 320, 320)
-    image_np = image.data.numpy().astype(np.float32)
+    image_np = image.data.numpy().astype(np.float32).transpose((0, 2, 3, 1))
     tr0 = tmodel.backbone(image)
     fr0 = fmodel.backbone(image_np)
-    tr1 = tmodel.head(tr0)
-    fr1 = fmodel.head(fr0)
-    diff = np.abs(tr1.data.numpy() - fr1)
+    diff = np.abs(tr0.data.numpy() - fr0.transpose((0, 3, 1, 2)))
 
     print((diff < 0.1).all())
+
 
 def serialize_model(m: nn.Module) -> Dict[str, Any]:
     if isinstance(m, models.YOLOX):
@@ -130,6 +131,10 @@ def serialize_model(m: nn.Module) -> Dict[str, Any]:
     elif isinstance(m, nn.SiLU):
         return {
             "type": "SiLU",
+        }
+    elif isinstance(m, nn.ReLU):
+        return {
+            "type": "ReLU"
         }
     elif isinstance(m, blocks.CSPLayer):
         return {
