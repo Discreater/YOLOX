@@ -10,6 +10,7 @@ import time
 
 import numpy as np
 from pycocotools.cocoeval import COCOeval
+from loguru import logger
 
 # import torch first to make yolox._C work without ImportError of libc10.so
 # in YOLOX, env is already set in __init__.py.
@@ -98,7 +99,7 @@ class COCOeval_opt(COCOeval):
 
         # <<<<<< calculate avg iou
         avg_iou = sum([iou[0][:, 0].max() for iou in ious if len(iou[0]) != 0]) / len(ious)
-        print("avg iou: {}".format(avg_iou))
+        logger.info("avg iou: {}".format(avg_iou))
         # >>>>>>
 
         if not p.useCats:
